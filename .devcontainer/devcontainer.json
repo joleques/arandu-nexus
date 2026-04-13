@@ -1,0 +1,45 @@
+{
+  "name": "arandu-nexus",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "node",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-next",
+        "mongodb.mongodb-vscode",
+        "openai.chatgpt",
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "files.eol": "\n",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "forwardPorts": [
+    3000,
+    27017
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "web",
+      "onAutoForward": "notify"
+    },
+    "27017": {
+      "label": "mongodb",
+      "onAutoForward": "silent"
+    }
+  },
+  "containerEnv": {
+    "NODE_ENV": "development",
+    "MONGODB_URI": "mongodb://mongo:27017/arandu_nexus"
+  }
+}

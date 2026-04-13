@@ -1,0 +1,20 @@
+[
+  {
+    "name": "slide-01-capa",
+    "prompt": "Capa de carrossel sobre alimentacao anti-inflamatoria, estilo editorial premium, luz suave lateral, fundo claro texturizado, espaco para titulo no topo, composicao limpa.",
+    "n": 1,
+    "size": "1080x1350"
+  },
+  {
+    "name": "slide-02-problema",
+    "prompt": "Mesa com alimentos ultraprocessados em desfoque, destaque em elementos de alerta visual em vermelho discreto, estilo fotografia documental, alto contraste, sem texto.",
+    "n": 1,
+    "size": "1080x1350"
+  },
+  {
+    "name": "slide-03-solucao",
+    "prompt": "Composicao com vegetais frescos e prato colorido, atmosfera otimista, luz natural, enquadramento top-down, visual realista premium para Instagram.",
+    "n": 1,
+    "size": "1080x1350"
+  }
+]
