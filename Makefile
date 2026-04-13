@@ -18,6 +18,11 @@ test:
 start:
 	npm run start
 
+run-dev:
+	rm -rf .next
+	npm run build
+	npm run dev
+
 check:
 	npm run lint
 	npm run test

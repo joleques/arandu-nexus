@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import type { TLShapePartial, TLStoreSnapshot } from '@tldraw/tlschema';
 import { DefaultColorStyle, DefaultLabelColorStyle, Editor, Tldraw, getSnapshot } from 'tldraw';
@@ -14,7 +13,6 @@ import {
   buildBoardArchitectureNodeShape,
 } from '@/modules/boards/application/board-architecture-elements';
 import {
-  BOARD_LABEL_COLOR_OPTIONS,
   BoardLabelColor,
   canApplyBoardLabelColor,
   getBoardTextColorMode,
@@ -24,12 +22,12 @@ import {
 } from '@/modules/boards/application/board-label-style';
 import { shouldPersistBoardSnapshot } from '@/modules/boards/application/board-persistence';
 import { Board } from '@/modules/boards/domain/board';
+import { BoardCanvasLayout } from '@/modules/boards/ui/board-canvas-layout';
+import { SaveState, getSaveLabel } from '@/modules/boards/ui/board-save-state';
 
 type BoardCanvasProps = {
   board: Board;
 };
-
-type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 type LabelPopoverState = {
   visible: boolean;
@@ -244,112 +242,40 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
   }
 
   return (
-    <main className="board-shell">
-      <header className="board-toolbar">
-        <div>
-          <Link className="ghost-link" href="/">
-            Voltar para boards
-          </Link>
-          <form className="board-title-form" onSubmit={handleTitleSubmit}>
+    <BoardCanvasLayout
+      titleEditor={
+        <form className="board-title-form" onSubmit={handleTitleSubmit}>
+          <label className="field field--inline">
+            <span>Titulo do board</span>
             <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} aria-label="Titulo do board" />
-            <button className="primary-button" type="submit">
-              Salvar titulo
-            </button>
-          </form>
-        </div>
-
-        <span className={`save-pill save-pill--${saveState}`}>{getSaveLabel(saveState)}</span>
-      </header>
-
-      <section className="board-workspace">
-        <aside className="board-architecture-panel" aria-label="Menu de arquitetura">
-          <div className="board-architecture-panel__section">
-            <span className="board-architecture-panel__heading">Elementos</span>
-            <div className="board-architecture-panel__grid">
-              {BOARD_ARCHITECTURE_NODE_DEFINITIONS.map((definition) => (
-                <button
-                  key={definition.kind}
-                  type="button"
-                  className="architecture-chip"
-                  onClick={() => handleInsertNode(definition.kind)}
-                  disabled={!editor}
-                  title={definition.description}
-                >
-                  <strong>{definition.label}</strong>
-                  <span>{definition.description}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="board-architecture-panel__section">
-            <span className="board-architecture-panel__heading">Fluxos</span>
-            <div className="board-architecture-panel__grid">
-              {BOARD_ARCHITECTURE_FLOW_DEFINITIONS.map((definition) => (
-                <button
-                  key={definition.kind}
-                  type="button"
-                  className="architecture-chip architecture-chip--flow"
-                  onClick={() => handleInsertFlow(definition.kind)}
-                  disabled={!editor}
-                  title={definition.description}
-                >
-                  <strong>{definition.label}</strong>
-                  <span>{definition.description}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        <section className="board-stage">
-          {labelPopover.visible && (
-            <div
-              className="label-color-popover"
-              style={{
-                left: labelPopover.x,
-                top: labelPopover.y,
-              }}
-            >
-              <span className="label-color-popover__label">Texto</span>
-              <div className="label-color-popover__swatches">
-                {BOARD_LABEL_COLOR_OPTIONS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    className={`color-swatch color-swatch--${color}`}
-                    data-active={selectedLabelColor === color}
-                    onClick={() => handleApplyLabelColor(color)}
-                    disabled={!editor}
-                    aria-label={`Aplicar cor ${color} ao texto do elemento selecionado`}
-                    title={`Aplicar cor ${color}`}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          <Tldraw
-            snapshot={initialSnapshot}
-            onMount={(mountedEditor) => {
-              setEditor(mountedEditor);
-            }}
-          />
-        </section>
-      </section>
-    </main>
+          </label>
+          <button className="primary-button primary-button--compact" type="submit">
+            Salvar titulo
+          </button>
+        </form>
+      }
+      saveLabel={getSaveLabel(saveState)}
+      saveState={saveState}
+      nodeDefinitions={BOARD_ARCHITECTURE_NODE_DEFINITIONS}
+      flowDefinitions={BOARD_ARCHITECTURE_FLOW_DEFINITIONS}
+      controlsDisabled={!editor}
+      onInsertNode={(kind) => handleInsertNode(kind as BoardArchitectureNodeKind)}
+      onInsertFlow={(kind) => handleInsertFlow(kind as BoardArchitectureFlowKind)}
+      labelPopover={{
+        ...labelPopover,
+        selectedColor: selectedLabelColor,
+        onApplyColor: handleApplyLabelColor,
+      }}
+      stage={
+        <Tldraw
+          snapshot={initialSnapshot}
+          onMount={(mountedEditor) => {
+            setEditor(mountedEditor);
+          }}
+        />
+      }
+    />
   );
 }
 
-function getSaveLabel(saveState: SaveState) {
-  switch (saveState) {
-    case 'saving':
-      return 'Salvando...';
-    case 'saved':
-      return 'Tudo salvo';
-    case 'error':
-      return 'Falha ao salvar';
-    default:
-      return 'Pronto para editar';
-  }
-}
+
