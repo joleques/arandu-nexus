@@ -5,6 +5,15 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import type { TLShapePartial, TLStoreSnapshot } from '@tldraw/tlschema';
 import { DefaultColorStyle, DefaultLabelColorStyle, Editor, Tldraw, getSnapshot } from 'tldraw';
 import {
+  BOARD_ARCHITECTURE_FLOW_DEFINITIONS,
+  BOARD_ARCHITECTURE_NODE_DEFINITIONS,
+  type BoardArchitectureFlowKind,
+  type BoardArchitectureNodeKind,
+  buildBoardArchitectureFlowShape,
+  buildBoardArchitectureNodeAsset,
+  buildBoardArchitectureNodeShape,
+} from '@/modules/boards/application/board-architecture-elements';
+import {
   BOARD_LABEL_COLOR_OPTIONS,
   BoardLabelColor,
   canApplyBoardLabelColor,
@@ -41,6 +50,8 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
   const [lastPersistedSnapshot, setLastPersistedSnapshot] = useState(board.currentDocument);
   const [selectedLabelColor, setSelectedLabelColor] = useState<BoardLabelColor>('black');
   const [labelPopover, setLabelPopover] = useState<LabelPopoverState>(hiddenPopoverState);
+  const [nodeInsertions, setNodeInsertions] = useState(0);
+  const [flowInsertions, setFlowInsertions] = useState(0);
 
   const initialSnapshot = useMemo(() => {
     if (!board.currentDocument) {
@@ -198,6 +209,40 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
     }
   }
 
+  function handleInsertNode(kind: BoardArchitectureNodeKind) {
+    if (!editor) {
+      return;
+    }
+
+    const viewportCenter = editor.getViewportPageBounds().center;
+    const x = viewportCenter.x - 180 + (nodeInsertions % 3) * 210;
+    const y = viewportCenter.y - 160 + (Math.floor(nodeInsertions / 3) % 3) * 150;
+    const asset = buildBoardArchitectureNodeAsset(kind);
+
+    if (asset) {
+      editor.createAssets([asset]);
+    }
+
+    const shape = buildBoardArchitectureNodeShape(kind, x, y, asset?.id);
+
+    editor.createShape(shape).select(shape.id);
+    setNodeInsertions((value) => value + 1);
+  }
+
+  function handleInsertFlow(kind: BoardArchitectureFlowKind) {
+    if (!editor) {
+      return;
+    }
+
+    const viewportCenter = editor.getViewportPageBounds().center;
+    const x = viewportCenter.x - 180 + (flowInsertions % 2) * 90;
+    const y = viewportCenter.y + 180 + (Math.floor(flowInsertions / 2) % 2) * 72;
+    const shape = buildBoardArchitectureFlowShape(kind, x, y);
+
+    editor.createShape(shape).select(shape.id);
+    setFlowInsertions((value) => value + 1);
+  }
+
   return (
     <main className="board-shell">
       <header className="board-toolbar">
@@ -216,39 +261,81 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
         <span className={`save-pill save-pill--${saveState}`}>{getSaveLabel(saveState)}</span>
       </header>
 
-      <section className="board-stage">
-        {labelPopover.visible && (
-          <div
-            className="label-color-popover"
-            style={{
-              left: labelPopover.x,
-              top: labelPopover.y,
-            }}
-          >
-            <span className="label-color-popover__label">Texto</span>
-            <div className="label-color-popover__swatches">
-              {BOARD_LABEL_COLOR_OPTIONS.map((color) => (
+      <section className="board-workspace">
+        <aside className="board-architecture-panel" aria-label="Menu de arquitetura">
+          <div className="board-architecture-panel__section">
+            <span className="board-architecture-panel__heading">Elementos</span>
+            <div className="board-architecture-panel__grid">
+              {BOARD_ARCHITECTURE_NODE_DEFINITIONS.map((definition) => (
                 <button
-                  key={color}
+                  key={definition.kind}
                   type="button"
-                  className={`color-swatch color-swatch--${color}`}
-                  data-active={selectedLabelColor === color}
-                  onClick={() => handleApplyLabelColor(color)}
+                  className="architecture-chip"
+                  onClick={() => handleInsertNode(definition.kind)}
                   disabled={!editor}
-                  aria-label={`Aplicar cor ${color} ao texto do elemento selecionado`}
-                  title={`Aplicar cor ${color}`}
-                />
+                  title={definition.description}
+                >
+                  <strong>{definition.label}</strong>
+                  <span>{definition.description}</span>
+                </button>
               ))}
             </div>
           </div>
-        )}
 
-        <Tldraw
-          snapshot={initialSnapshot}
-          onMount={(mountedEditor) => {
-            setEditor(mountedEditor);
-          }}
-        />
+          <div className="board-architecture-panel__section">
+            <span className="board-architecture-panel__heading">Fluxos</span>
+            <div className="board-architecture-panel__grid">
+              {BOARD_ARCHITECTURE_FLOW_DEFINITIONS.map((definition) => (
+                <button
+                  key={definition.kind}
+                  type="button"
+                  className="architecture-chip architecture-chip--flow"
+                  onClick={() => handleInsertFlow(definition.kind)}
+                  disabled={!editor}
+                  title={definition.description}
+                >
+                  <strong>{definition.label}</strong>
+                  <span>{definition.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </aside>
+
+        <section className="board-stage">
+          {labelPopover.visible && (
+            <div
+              className="label-color-popover"
+              style={{
+                left: labelPopover.x,
+                top: labelPopover.y,
+              }}
+            >
+              <span className="label-color-popover__label">Texto</span>
+              <div className="label-color-popover__swatches">
+                {BOARD_LABEL_COLOR_OPTIONS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    className={`color-swatch color-swatch--${color}`}
+                    data-active={selectedLabelColor === color}
+                    onClick={() => handleApplyLabelColor(color)}
+                    disabled={!editor}
+                    aria-label={`Aplicar cor ${color} ao texto do elemento selecionado`}
+                    title={`Aplicar cor ${color}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <Tldraw
+            snapshot={initialSnapshot}
+            onMount={(mountedEditor) => {
+              setEditor(mountedEditor);
+            }}
+          />
+        </section>
       </section>
     </main>
   );
