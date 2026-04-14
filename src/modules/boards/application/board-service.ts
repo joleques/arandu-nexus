@@ -48,6 +48,10 @@ export class BoardService {
 
     return this.boardRepository.update(id, updatedBoard);
   }
+
+  async deleteBoard(id: string) {
+    return this.boardRepository.delete(id);
+  }
 }
 
 export function parseBoardSnapshot(snapshot: string) {

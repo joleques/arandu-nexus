@@ -23,6 +23,10 @@ class InMemoryBoardRepository implements BoardRepository {
     this.boards.set(id, input);
     return this.boards.get(id) ?? null;
   }
+
+  async delete(id: string) {
+    return this.boards.delete(id);
+  }
 }
 
 describe('BoardService', () => {
@@ -62,5 +66,20 @@ describe('BoardService', () => {
     const serialized = stringifyBoardSnapshot(snapshot);
 
     expect(parseBoardSnapshot(serialized)).toEqual(snapshot);
+  });
+
+  it('deletes an existing board and reports success', async () => {
+    const repository = new InMemoryBoardRepository();
+    const service = new BoardService(repository);
+    const board = await service.createBoard({ title: 'Board descartavel' });
+
+    await expect(service.deleteBoard(board.id)).resolves.toBe(true);
+    await expect(service.getBoardById(board.id)).resolves.toBeNull();
+  });
+
+  it('returns false when deleting a board that does not exist', async () => {
+    const service = new BoardService(new InMemoryBoardRepository());
+
+    await expect(service.deleteBoard('board-inexistente')).resolves.toBe(false);
   });
 });

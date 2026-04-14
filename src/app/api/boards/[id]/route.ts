@@ -42,3 +42,14 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 }
+
+export async function DELETE(_request: Request, context: RouteContext) {
+  const { id } = await context.params;
+  const deleted = await boardService.deleteBoard(id);
+
+  if (!deleted) {
+    return NextResponse.json({ message: 'Board not found.' }, { status: 404 });
+  }
+
+  return new NextResponse(null, { status: 204 });
+}

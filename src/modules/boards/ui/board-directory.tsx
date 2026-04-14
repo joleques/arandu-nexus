@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
 
 type BoardSummary = {
@@ -12,6 +13,7 @@ type BoardSummary = {
 type BoardDirectoryProps = {
   boards: BoardSummary[];
   createBoardAction: (formData: FormData) => Promise<void>;
+  deleteBoardAction: (boardId: string) => Promise<void>;
 };
 
 function SubmitButton() {
@@ -24,7 +26,17 @@ function SubmitButton() {
   );
 }
 
-export function BoardDirectory({ boards, createBoardAction }: BoardDirectoryProps) {
+function DeleteBoardButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button className="ghost-link ghost-link--danger" type="submit" disabled={pending}>
+      {pending ? 'Excluindo...' : 'Excluir'}
+    </button>
+  );
+}
+
+export function BoardDirectory({ boards, createBoardAction, deleteBoardAction }: BoardDirectoryProps) {
   const boardCountLabel = `${boards.length} ${boards.length === 1 ? 'board ativo' : 'boards ativos'}`;
 
   return (
@@ -103,12 +115,26 @@ export function BoardDirectory({ boards, createBoardAction }: BoardDirectoryProp
               </article>
             ) : (
               boards.map((board) => (
-                <a className="board-card" key={board.id} href={`/boards/${board.id}`}>
-                  <span className="board-card__eyebrow">Board</span>
-                  <strong>{board.title}</strong>
-                  <span>Atualizado em {new Date(board.updatedAt).toLocaleString('pt-BR')}</span>
-                  <span className="board-card__cta">Abrir workspace</span>
-                </a>
+                <article className="board-card" key={board.id}>
+                  <Link className="board-card__link" href={`/boards/${board.id}`}>
+                    <span className="board-card__eyebrow">Board</span>
+                    <strong>{board.title}</strong>
+                    <span>Atualizado em {new Date(board.updatedAt).toLocaleString('pt-BR')}</span>
+                    <span className="board-card__cta">Abrir workspace</span>
+                  </Link>
+
+                  <form
+                    action={deleteBoardAction.bind(null, board.id)}
+                    className="board-card__actions"
+                    onSubmit={(event) => {
+                      if (!window.confirm(`Deseja excluir o board "${board.title}"?`)) {
+                        event.preventDefault();
+                      }
+                    }}
+                  >
+                    <DeleteBoardButton />
+                  </form>
+                </article>
               ))
             )}
           </div>

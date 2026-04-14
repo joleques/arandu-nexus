@@ -15,6 +15,7 @@ describe('BoardDirectory', () => {
           },
         ]}
         createBoardAction={async () => {}}
+        deleteBoardAction={async () => {}}
       />,
     );
 
@@ -22,10 +23,13 @@ describe('BoardDirectory', () => {
     expect(markup).toContain('Novo board');
     expect(markup).toContain('Arquitetura de onboarding');
     expect(markup).toContain('Abrir workspace');
+    expect(markup).toContain('Excluir');
   });
 
   it('renders the empty state copy when there are no boards', () => {
-    const markup = renderToStaticMarkup(<BoardDirectory boards={[]} createBoardAction={async () => {}} />);
+    const markup = renderToStaticMarkup(
+      <BoardDirectory boards={[]} createBoardAction={async () => {}} deleteBoardAction={async () => {}} />,
+    );
 
     expect(markup).toContain('Nenhum board criado ainda.');
     expect(markup).toContain('O lado bom do vazio inicial');

@@ -60,4 +60,10 @@ export class MongoBoardRepository implements BoardRepository {
 
     return this.getById(id);
   }
+
+  async delete(id: string) {
+    const collection = await this.getCollection();
+    const result = await collection.deleteOne({ _id: id });
+    return result.deletedCount === 1;
+  }
 }
