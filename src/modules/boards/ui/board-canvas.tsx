@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { TLShapePartial, TLStoreSnapshot } from '@tldraw/tlschema';
 import { DefaultColorStyle, DefaultLabelColorStyle, Editor, Tldraw, getSnapshot } from 'tldraw';
 import {
@@ -21,6 +21,7 @@ import {
   shouldShowBoardLabelPopover,
 } from '@/modules/boards/application/board-label-style';
 import { shouldPersistBoardSnapshot } from '@/modules/boards/application/board-persistence';
+import { shouldPersistBoardTitle } from '@/modules/boards/application/board-title-persistence';
 import { Board } from '@/modules/boards/domain/board';
 import { BoardCanvasLayout } from '@/modules/boards/ui/board-canvas-layout';
 import { SaveState, getSaveLabel } from '@/modules/boards/ui/board-save-state';
@@ -46,6 +47,7 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
   const [title, setTitle] = useState(board.title);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [lastPersistedSnapshot, setLastPersistedSnapshot] = useState(board.currentDocument);
+  const [lastPersistedTitle, setLastPersistedTitle] = useState(board.title);
   const [selectedLabelColor, setSelectedLabelColor] = useState<BoardLabelColor>('black');
   const [labelPopover, setLabelPopover] = useState<LabelPopoverState>(hiddenPopoverState);
   const [nodeInsertions, setNodeInsertions] = useState(0);
@@ -94,6 +96,40 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
   }, [board.id, editor, lastPersistedSnapshot]);
 
   useEffect(() => {
+    if (!shouldPersistBoardTitle(title, lastPersistedTitle)) {
+      return;
+    }
+
+    const normalizedTitle = title.trim();
+    const timeout = window.setTimeout(async () => {
+      try {
+        setSaveState('saving');
+
+        const response = await fetch(`/api/boards/${board.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ title: normalizedTitle }),
+        });
+
+        if (!response.ok) {
+          setSaveState('error');
+          return;
+        }
+
+        setLastPersistedTitle(normalizedTitle);
+        setTitle((currentTitle) => (currentTitle.trim() === normalizedTitle ? normalizedTitle : currentTitle));
+        setSaveState('saved');
+      } catch {
+        setSaveState('error');
+      }
+    }, 550);
+
+    return () => window.clearTimeout(timeout);
+  }, [board.id, title, lastPersistedTitle]);
+
+  useEffect(() => {
     if (!editor) {
       setLabelPopover(hiddenPopoverState);
       return;
@@ -140,25 +176,6 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
 
     return () => window.clearInterval(interval);
   }, [editor]);
-
-  async function handleTitleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaveState('saving');
-
-    try {
-      const response = await fetch(`/api/boards/${board.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ title }),
-      });
-
-      setSaveState(response.ok ? 'saved' : 'error');
-    } catch {
-      setSaveState('error');
-    }
-  }
 
   function handleApplyLabelColor(color: BoardLabelColor) {
     if (!editor || !canApplyBoardLabelColor(true)) {
@@ -244,15 +261,15 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
   return (
     <BoardCanvasLayout
       titleEditor={
-        <form className="board-title-form" onSubmit={handleTitleSubmit}>
-          <label className="field field--inline">
-            <span>Titulo do board</span>
-            <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} aria-label="Titulo do board" />
-          </label>
-          <button className="primary-button primary-button--compact" type="submit">
-            Salvar titulo
-          </button>
-        </form>
+        <label className="board-title-field">
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            maxLength={80}
+            aria-label="Titulo do board"
+            placeholder="Titulo do board"
+          />
+        </label>
       }
       saveLabel={getSaveLabel(saveState)}
       saveState={saveState}
@@ -277,5 +294,3 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
     />
   );
 }
-
-

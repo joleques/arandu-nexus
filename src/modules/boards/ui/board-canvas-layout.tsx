@@ -45,16 +45,10 @@ export function BoardCanvasLayout({
     <main className="board-shell">
       <header className="board-toolbar">
         <div className="board-toolbar__main">
-          <Link className="ghost-link" href="/">
+          <Link className="ghost-link ghost-link--toolbar" href="/">
             Voltar para boards
           </Link>
-          <div className="board-toolbar__content">
-            <div className="board-toolbar__intro">
-              <span className="eyebrow">Board workspace</span>
-              <p>Modele a arquitetura com blocos prontos, fluxos e canvas persistido.</p>
-            </div>
-            {titleEditor}
-          </div>
+          {titleEditor}
         </div>
 
         <div className="board-toolbar__status">
@@ -116,11 +110,6 @@ export function BoardCanvasLayout({
         </aside>
 
         <section className="board-stage">
-          <div className="board-stage__overlay">
-            <span className="board-stage__badge">Canvas ativo</span>
-            <span className="board-stage__hint">Arraste, conecte e deixe o autosave fazer o trabalho ingrato.</span>
-          </div>
-
           {labelPopover.visible && (
             <div
               className="label-color-popover"

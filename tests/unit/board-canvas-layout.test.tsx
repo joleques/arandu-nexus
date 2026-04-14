@@ -6,10 +6,10 @@ import { BoardCanvasLayout } from '@/modules/boards/ui/board-canvas-layout';
 import { getSaveLabel } from '@/modules/boards/ui/board-save-state';
 
 describe('BoardCanvasLayout', () => {
-  it('renders toolbar copy, library sections and stage overlay', () => {
+  it('renders the compact toolbar, library sections and stage overlay', () => {
     const markup = renderToStaticMarkup(
       <BoardCanvasLayout
-        titleEditor={<form><input aria-label="Titulo do board" defaultValue="Context map" /></form>}
+        titleEditor={<input aria-label="Titulo do board" defaultValue="Context map" />}
         saveLabel={getSaveLabel('saved')}
         saveState="saved"
         nodeDefinitions={BOARD_ARCHITECTURE_NODE_DEFINITIONS}
@@ -28,10 +28,11 @@ describe('BoardCanvasLayout', () => {
       />,
     );
 
-    expect(markup).toContain('Board workspace');
+    expect(markup).toContain('Voltar para boards');
     expect(markup).toContain('Biblioteca visual');
-    expect(markup).toContain('Canvas ativo');
     expect(markup).toContain('Tudo salvo');
+    expect(markup).not.toContain('Board workspace');
+    expect(markup).not.toContain('Arraste, conecte e deixe o autosave');
   });
 
   it('maps save states to user-facing labels', () => {

@@ -1,5 +1,8 @@
 # Pontos a melhorar
 
-- nuvem de serviço
-- ter filas, services, base de dados, api, diferenciar assync de sync
-- leyout
+- lentidao para carregar
+- documentar
+- volume para o mongo
+- link imagens
+- add menu somente com as imagens
+- deletar o board
