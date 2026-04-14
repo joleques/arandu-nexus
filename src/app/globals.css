@@ -490,9 +490,9 @@ h2 {
   min-height: 0;
   overflow: auto;
   display: grid;
-  gap: 0.95rem;
+  gap: 0.8rem;
   align-content: start;
-  padding: 0.95rem;
+  padding: 0.85rem;
   border: 1px solid rgba(53, 24, 26, 0.08);
   border-radius: 24px;
   background:
@@ -504,8 +504,8 @@ h2 {
 
 .board-architecture-panel__section {
   display: grid;
-  gap: 0.65rem;
-  padding: 0.95rem;
+  gap: 0.55rem;
+  padding: 0.8rem;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.66);
   border: 1px solid rgba(53, 24, 26, 0.07);
@@ -547,6 +547,10 @@ h2 {
   gap: 0.65rem;
 }
 
+.board-architecture-panel__grid--compact {
+  gap: 0.5rem;
+}
+
 .architecture-chip {
   display: grid;
   gap: 0.25rem;
@@ -563,6 +567,69 @@ h2 {
 
 .architecture-chip strong {
   font-size: 0.95rem;
+}
+
+.architecture-chip--compact {
+  min-height: 0;
+  padding: 0.72rem 0.78rem;
+  gap: 0.18rem;
+  border-radius: 16px;
+}
+
+.architecture-chip--compact strong {
+  font-size: 0.88rem;
+  line-height: 1.15;
+}
+
+.architecture-chip--compact span {
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.image-library-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.image-library-chip {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
+  padding: 0.7rem 0.55rem;
+  border: 1px solid rgba(53, 24, 26, 0.09);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(53, 24, 26, 0.05);
+}
+
+.image-library-chip img {
+  width: 3rem;
+  height: 3rem;
+  object-fit: contain;
+}
+
+.image-library-chip span {
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink-soft);
+}
+
+.image-library-chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.image-library-chip:not(:disabled):hover,
+.image-library-chip:not(:disabled):focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(209, 73, 46, 0.35);
+  box-shadow: 0 14px 26px rgba(53, 24, 26, 0.09);
 }
 
 .architecture-chip--flow {
@@ -679,7 +746,8 @@ h2 {
   }
 
   .hero__stats,
-  .board-architecture-panel__grid {
+  .board-architecture-panel__grid,
+  .image-library-grid {
     grid-template-columns: 1fr;
   }
 

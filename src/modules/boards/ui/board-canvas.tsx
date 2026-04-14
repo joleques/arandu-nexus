@@ -13,6 +13,11 @@ import {
   buildBoardArchitectureNodeShape,
 } from '@/modules/boards/application/board-architecture-elements';
 import {
+  BOARD_IMAGE_LIBRARY_ITEMS,
+  buildBoardImageLibraryAsset,
+  buildBoardImageLibraryShape,
+} from '@/modules/boards/application/board-image-library';
+import {
   BoardLabelColor,
   canApplyBoardLabelColor,
   getBoardTextColorMode,
@@ -52,6 +57,7 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
   const [labelPopover, setLabelPopover] = useState<LabelPopoverState>(hiddenPopoverState);
   const [nodeInsertions, setNodeInsertions] = useState(0);
   const [flowInsertions, setFlowInsertions] = useState(0);
+  const [imageInsertions, setImageInsertions] = useState(0);
 
   const initialSnapshot = useMemo(() => {
     if (!board.currentDocument) {
@@ -258,6 +264,29 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
     setFlowInsertions((value) => value + 1);
   }
 
+  function handleInsertImage(kind: string) {
+    if (!editor) {
+      return;
+    }
+
+    const item = BOARD_IMAGE_LIBRARY_ITEMS.find((entry) => entry.kind === kind);
+
+    if (!item) {
+      return;
+    }
+
+    const viewportCenter = editor.getViewportPageBounds().center;
+    const x = viewportCenter.x - 180 + (imageInsertions % 3) * 160;
+    const y = viewportCenter.y - 80 + (Math.floor(imageInsertions / 3) % 3) * 128;
+    const asset = buildBoardImageLibraryAsset(item);
+
+    editor.createAssets([asset]);
+    const shape = buildBoardImageLibraryShape(item, x, y, asset.id);
+
+    editor.createShape(shape).select(shape.id);
+    setImageInsertions((value) => value + 1);
+  }
+
   return (
     <BoardCanvasLayout
       titleEditor={
@@ -275,9 +304,11 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
       saveState={saveState}
       nodeDefinitions={BOARD_ARCHITECTURE_NODE_DEFINITIONS}
       flowDefinitions={BOARD_ARCHITECTURE_FLOW_DEFINITIONS}
+      imageDefinitions={BOARD_IMAGE_LIBRARY_ITEMS}
       controlsDisabled={!editor}
       onInsertNode={(kind) => handleInsertNode(kind as BoardArchitectureNodeKind)}
       onInsertFlow={(kind) => handleInsertFlow(kind as BoardArchitectureFlowKind)}
+      onInsertImage={handleInsertImage}
       labelPopover={{
         ...labelPopover,
         selectedColor: selectedLabelColor,

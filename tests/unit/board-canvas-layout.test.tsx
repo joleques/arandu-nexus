@@ -14,9 +14,11 @@ describe('BoardCanvasLayout', () => {
         saveState="saved"
         nodeDefinitions={BOARD_ARCHITECTURE_NODE_DEFINITIONS}
         flowDefinitions={BOARD_ARCHITECTURE_FLOW_DEFINITIONS}
+        imageDefinitions={[{ kind: 'api', label: 'API', src: '/icons/api.png' }]}
         controlsDisabled={false}
         onInsertNode={vi.fn()}
         onInsertFlow={vi.fn()}
+        onInsertImage={vi.fn()}
         labelPopover={{
           visible: false,
           x: 0,
@@ -30,6 +32,8 @@ describe('BoardCanvasLayout', () => {
 
     expect(markup).toContain('Voltar para boards');
     expect(markup).toContain('Biblioteca visual');
+    expect(markup).toContain('Imagens');
+    expect(markup).toContain('API');
     expect(markup).toContain('Tudo salvo');
     expect(markup).not.toContain('Board workspace');
     expect(markup).not.toContain('Arraste, conecte e deixe o autosave');

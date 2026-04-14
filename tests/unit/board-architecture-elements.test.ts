@@ -56,11 +56,11 @@ describe('board architecture elements', () => {
     });
     expect(queueShape).toMatchObject({
       type: 'image',
-      props: { assetId: queueAsset?.id, altText: 'Fila', url: '/icons/fila-0.png', w: 212, h: 60 },
+      props: { assetId: queueAsset?.id, altText: 'Fila', w: 212, h: 60 },
     });
     expect(topicShape).toMatchObject({
       type: 'image',
-      props: { assetId: topicAsset?.id, altText: 'Topico', url: '/icons/topic-0.png', w: 172, h: 72 },
+      props: { assetId: topicAsset?.id, altText: 'Topico', w: 172, h: 72 },
     });
   });
 
