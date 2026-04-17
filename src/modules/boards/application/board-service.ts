@@ -6,6 +6,7 @@ import {
   updateBoardRecord,
 } from '@/modules/boards/domain/board';
 import { BoardRepository } from '@/modules/boards/application/board-repository';
+import { assertBoardSnapshotIsSupported } from '@/modules/boards/application/board-snapshot-guard';
 
 export class BoardService {
   constructor(private readonly boardRepository: BoardRepository) {}
@@ -39,6 +40,10 @@ export class BoardService {
     const nextTitle = input.title?.trim();
     if (input.title !== undefined && !nextTitle) {
       throw new Error('Board title cannot be empty.');
+    }
+
+    if (input.currentDocument !== undefined) {
+      assertBoardSnapshotIsSupported(input.currentDocument);
     }
 
     const updatedBoard = updateBoardRecord(existingBoard, {

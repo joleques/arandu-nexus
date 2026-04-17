@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BoardRepository } from '@/modules/boards/application/board-repository';
 import { BoardService, parseBoardSnapshot, stringifyBoardSnapshot } from '@/modules/boards/application/board-service';
+import { getBoardUnsupportedAssetMessage } from '@/modules/boards/application/board-snapshot-guard';
 import { Board } from '@/modules/boards/domain/board';
 
 class InMemoryBoardRepository implements BoardRepository {
@@ -54,6 +55,30 @@ describe('BoardService', () => {
       title: 'Board revisado',
       currentDocument: '{"document":{}}',
     });
+  });
+
+  it('rejects snapshots containing uploaded image data urls', async () => {
+    const repository = new InMemoryBoardRepository();
+    const service = new BoardService(repository);
+    const board = await service.createBoard({ title: 'Board com imagens' });
+    const snapshot = JSON.stringify({
+      store: {
+        'asset:1': {
+          id: 'asset:1',
+          typeName: 'asset',
+          type: 'image',
+          props: {
+            src: 'data:image/png;base64,abc123',
+          },
+        },
+      },
+    });
+
+    await expect(
+      service.updateBoard(board.id, {
+        currentDocument: snapshot,
+      }),
+    ).rejects.toThrow(getBoardUnsupportedAssetMessage());
   });
 
   it('serializes and parses snapshots consistently', () => {

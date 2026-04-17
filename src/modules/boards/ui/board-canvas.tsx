@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { TLShapePartial, TLStoreSnapshot } from '@tldraw/tlschema';
 import { DefaultColorStyle, DefaultLabelColorStyle, Editor, Tldraw, getSnapshot } from 'tldraw';
+import { createBoardEditorAssetStore } from '@/modules/boards/application/board-editor-assets';
 import {
   BOARD_ARCHITECTURE_FLOW_DEFINITIONS,
   BOARD_ARCHITECTURE_NODE_DEFINITIONS,
@@ -30,6 +31,7 @@ import { shouldPersistBoardTitle } from '@/modules/boards/application/board-titl
 import { Board } from '@/modules/boards/domain/board';
 import { BoardCanvasLayout } from '@/modules/boards/ui/board-canvas-layout';
 import { SaveState, getSaveLabel } from '@/modules/boards/ui/board-save-state';
+import { logAdapter } from '@/shared/logging/log-adapter';
 
 type BoardCanvasProps = {
   board: Board;
@@ -52,12 +54,15 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
   const [title, setTitle] = useState(board.title);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [lastPersistedSnapshot, setLastPersistedSnapshot] = useState(board.currentDocument);
+  const [lastFailedSnapshot, setLastFailedSnapshot] = useState('');
   const [lastPersistedTitle, setLastPersistedTitle] = useState(board.title);
   const [selectedLabelColor, setSelectedLabelColor] = useState<BoardLabelColor>('black');
   const [labelPopover, setLabelPopover] = useState<LabelPopoverState>(hiddenPopoverState);
   const [nodeInsertions, setNodeInsertions] = useState(0);
   const [flowInsertions, setFlowInsertions] = useState(0);
   const [imageInsertions, setImageInsertions] = useState(0);
+
+  const assetStore = useMemo(() => createBoardEditorAssetStore(board.id), [board.id]);
 
   const initialSnapshot = useMemo(() => {
     if (!board.currentDocument) {
@@ -75,6 +80,10 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
         return;
       }
 
+      if (snapshot === lastFailedSnapshot) {
+        return;
+      }
+
       try {
         setSaveState('saving');
 
@@ -87,19 +96,36 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
         });
 
         if (!response.ok) {
+          const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+          const errorMessage = payload?.message ?? 'Unable to update board.';
+          setLastFailedSnapshot(snapshot);
+          logAdapter.error('Board autosave failed.', {
+            boardId: board.id,
+            status: response.status,
+            snapshotLength: snapshot.length,
+            error: errorMessage,
+          });
           setSaveState('error');
           return;
         }
 
+        setLastFailedSnapshot('');
+
         setLastPersistedSnapshot(snapshot);
         setSaveState('saved');
-      } catch {
+      } catch (error) {
+        setLastFailedSnapshot(snapshot);
+        logAdapter.error('Board autosave request failed.', {
+          boardId: board.id,
+          snapshotLength: snapshot.length,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
         setSaveState('error');
       }
     }, 1200);
 
     return () => window.clearInterval(interval);
-  }, [board.id, editor, lastPersistedSnapshot]);
+  }, [board.id, editor, lastFailedSnapshot, lastPersistedSnapshot]);
 
   useEffect(() => {
     if (!shouldPersistBoardTitle(title, lastPersistedTitle)) {
@@ -316,6 +342,7 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
       }}
       stage={
         <Tldraw
+          assets={assetStore}
           snapshot={initialSnapshot}
           onMount={(mountedEditor) => {
             setEditor(mountedEditor);

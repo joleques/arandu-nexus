@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logAdapter } from '@/shared/logging/log-adapter';
 import { createBoardService } from '@/modules/boards/infra/board-service-factory';
 
 const boardService = createBoardService();
@@ -36,6 +37,13 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     return NextResponse.json({ board });
   } catch (error) {
+    logAdapter.error('Board update failed.', {
+      boardId: id,
+      titleProvided: payload.title !== undefined,
+      currentDocumentLength: payload.currentDocument?.length ?? 0,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+
     return NextResponse.json(
       { message: error instanceof Error ? error.message : 'Unable to update board.' },
       { status: 400 }
