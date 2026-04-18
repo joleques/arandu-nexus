@@ -30,6 +30,15 @@ type LabelPopoverProps = {
   onApplyColor: (color: BoardLabelColor) => void;
 };
 
+type MindmapNodeControlsProps = {
+  visible: boolean;
+  x: number;
+  y: number;
+  canRemove: boolean;
+  onAddChild: () => void;
+  onRemoveNode: () => void;
+};
+
 type BoardCanvasLayoutProps = {
   titleEditor: ReactNode;
   saveLabel: string;
@@ -45,6 +54,7 @@ type BoardCanvasLayoutProps = {
   onMindmapAction: (kind: BoardMindmapActionKind) => void;
   onInsertImage: (kind: string) => void;
   labelPopover: LabelPopoverProps;
+  mindmapNodeControls: MindmapNodeControlsProps;
   stage: ReactNode;
 };
 
@@ -63,6 +73,7 @@ export function BoardCanvasLayout({
   onMindmapAction,
   onInsertImage,
   labelPopover,
+  mindmapNodeControls,
   stage,
 }: BoardCanvasLayoutProps) {
   return (
@@ -202,6 +213,39 @@ export function BoardCanvasLayout({
                   />
                 ))}
               </div>
+            </div>
+          )}
+
+          {mindmapNodeControls.visible && (
+            <div
+              className="mindmap-node-controls"
+              style={{
+                left: mindmapNodeControls.x,
+                top: mindmapNodeControls.y,
+              }}
+            >
+              <button
+                type="button"
+                className="mindmap-node-controls__button"
+                onClick={mindmapNodeControls.onAddChild}
+                disabled={controlsDisabled}
+                aria-label="Adicionar filho ao topico selecionado"
+                title="Adicionar filho"
+              >
+                +
+              </button>
+              {mindmapNodeControls.canRemove && (
+                <button
+                  type="button"
+                  className="mindmap-node-controls__button mindmap-node-controls__button--danger"
+                  onClick={mindmapNodeControls.onRemoveNode}
+                  disabled={controlsDisabled}
+                  aria-label="Remover topico selecionado"
+                  title="Remover topico"
+                >
+                  -
+                </button>
+              )}
             </div>
           )}
 

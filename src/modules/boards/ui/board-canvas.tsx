@@ -20,6 +20,7 @@ import {
 } from '@/modules/boards/application/board-image-library';
 import {
   BOARD_MINDMAP_ACTION_DEFINITIONS,
+  buildBoardMindmapDeletePlan,
   buildBoardMindmapChildShape,
   buildBoardMindmapCollapseToggleUpdates,
   buildBoardMindmapConnectionShapeId,
@@ -63,10 +64,24 @@ type LabelPopoverState = {
   y: number;
 };
 
+type MindmapNodeControlsState = {
+  visible: boolean;
+  x: number;
+  y: number;
+  canRemove: boolean;
+};
+
 const hiddenPopoverState: LabelPopoverState = {
   visible: false,
   x: 0,
   y: 0,
+};
+
+const hiddenMindmapNodeControlsState: MindmapNodeControlsState = {
+  visible: false,
+  x: 0,
+  y: 0,
+  canRemove: false,
 };
 
 export function BoardCanvas({ board }: BoardCanvasProps) {
@@ -78,6 +93,7 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
   const [lastPersistedTitle, setLastPersistedTitle] = useState(board.title);
   const [selectedLabelColor, setSelectedLabelColor] = useState<BoardLabelColor>('black');
   const [labelPopover, setLabelPopover] = useState<LabelPopoverState>(hiddenPopoverState);
+  const [mindmapNodeControls, setMindmapNodeControls] = useState<MindmapNodeControlsState>(hiddenMindmapNodeControlsState);
   const [mindmapHint, setMindmapHint] = useState('Crie um topico central para iniciar o mindmap.');
   const [nodeInsertions, setNodeInsertions] = useState(0);
   const [flowInsertions, setFlowInsertions] = useState(0);
@@ -188,6 +204,7 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
   useEffect(() => {
     if (!editor) {
       setLabelPopover(hiddenPopoverState);
+      setMindmapNodeControls(hiddenMindmapNodeControlsState);
       return;
     }
 
@@ -197,8 +214,32 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
       const selectedShapes = selectedShapeIds.map((id) => editor.getShape(id));
       const mindmapNodes = collectBoardMindmapNodeRecords(editor.getCurrentPageShapes());
       const textColorMode = getBoardTextColorMode(selectedShapes);
+      const selectedMindmapNodes = mindmapNodes.filter((node) => selectedShapeIds.includes(node.shapeId));
 
       setMindmapHint(getBoardMindmapSelectionHint(mindmapNodes, selectedShapeIds));
+
+      if (selectedMindmapNodes.length === 1) {
+        const selectedNode = selectedMindmapNodes[0];
+        const nodeBounds = editor.getShapePageBounds(selectedNode.shapeId);
+
+        if (nodeBounds) {
+          const anchorPoint = editor.pageToViewport({
+            x: nodeBounds.x + nodeBounds.w + 12,
+            y: nodeBounds.y - 12,
+          });
+
+          setMindmapNodeControls({
+            visible: true,
+            x: anchorPoint.x,
+            y: anchorPoint.y,
+            canRemove: selectedNode.parentId !== null,
+          });
+        } else {
+          setMindmapNodeControls((state) => (state.visible ? hiddenMindmapNodeControlsState : state));
+        }
+      } else {
+        setMindmapNodeControls((state) => (state.visible ? hiddenMindmapNodeControlsState : state));
+      }
 
       if (!shouldShowBoardLabelPopover(selectedShapes) || !selectionBounds) {
         setLabelPopover((state) => (state.visible ? hiddenPopoverState : state));
@@ -577,6 +618,31 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
     }
   }, [editor, getMindmapNodes, getSelectedMindmapNode, rebuildMindmapLayout]);
 
+  const handleRemoveSelectedMindmapNode = useCallback(() => {
+    if (!editor) {
+      return;
+    }
+
+    const nodes = getMindmapNodes();
+    const selectedNode = getSelectedMindmapNode(nodes);
+
+    if (!selectedNode || !selectedNode.parentId) {
+      return;
+    }
+
+    const deletePlan = buildBoardMindmapDeletePlan(nodes, selectedNode.id);
+    const shapeIdsToDelete = [...deletePlan.nodeShapeIds, ...deletePlan.connectionShapeIds];
+
+    if (shapeIdsToDelete.length === 0) {
+      return;
+    }
+
+    editor.run(() => {
+      editor.deleteShapes(shapeIdsToDelete);
+    }, { ignoreShapeLock: true });
+    setMindmapNodeControls(hiddenMindmapNodeControlsState);
+  }, [editor, getMindmapNodes, getSelectedMindmapNode]);
+
   useEffect(() => {
     if (!editor) {
       return;
@@ -753,6 +819,11 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
         ...labelPopover,
         selectedColor: selectedLabelColor,
         onApplyColor: handleApplyLabelColor,
+      }}
+      mindmapNodeControls={{
+        ...mindmapNodeControls,
+        onAddChild: () => handleMindmapAction('create-child'),
+        onRemoveNode: handleRemoveSelectedMindmapNode,
       }}
       stage={
         <Tldraw

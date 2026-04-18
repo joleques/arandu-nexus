@@ -43,6 +43,11 @@ export type BoardMindmapConnectionRecord = {
   targetNodeId: string;
 };
 
+export type BoardMindmapDeletePlan = {
+  nodeShapeIds: ReturnType<typeof createShapeId>[];
+  connectionShapeIds: ReturnType<typeof createShapeId>[];
+};
+
 type BoardMindmapShapeLike = {
   id: string;
   type?: string;
@@ -300,6 +305,31 @@ function collectDescendantIds(nodeId: string, childrenByParent: Map<string, Boar
   });
 
   return descendants;
+}
+
+export function buildBoardMindmapDeletePlan(nodes: BoardMindmapNodeRecord[], targetNodeId: string): BoardMindmapDeletePlan {
+  const targetNode = nodes.find((node) => node.id === targetNodeId);
+
+  if (!targetNode) {
+    return {
+      nodeShapeIds: [],
+      connectionShapeIds: [],
+    };
+  }
+
+  const childrenByParent = groupChildren(nodes);
+  const descendantIds = collectDescendantIds(targetNodeId, childrenByParent);
+  const removedNodeIds = [targetNodeId, ...descendantIds];
+  const removedNodeIdSet = new Set(removedNodeIds);
+
+  return {
+    nodeShapeIds: nodes
+      .filter((node) => removedNodeIdSet.has(node.id))
+      .map((node) => node.shapeId as ReturnType<typeof createShapeId>),
+    connectionShapeIds: nodes
+      .filter((node) => removedNodeIdSet.has(node.id) && node.parentId !== null)
+      .map((node) => buildBoardMindmapConnectionShapeId(node.id)),
+  };
 }
 
 function getNodeCenter(node: BoardMindmapNodeRecord) {

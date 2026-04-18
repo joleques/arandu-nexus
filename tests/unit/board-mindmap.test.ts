@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   BOARD_MINDMAP_ACTION_DEFINITIONS,
+  buildBoardMindmapDeletePlan,
   buildBoardMindmapChildShape,
   buildBoardMindmapCollapseToggleUpdates,
   buildBoardMindmapConnectionLockUpdates,
+  buildBoardMindmapConnectionShapeId,
   buildBoardMindmapConnectionShapes,
   buildBoardMindmapRootShape,
   buildBoardMindmapSemanticPlacementUpdates,
@@ -208,6 +210,23 @@ describe('board mindmap', () => {
 
     expect(orphanIds).toEqual([connections[0].id]);
     expect(healthyIds).toEqual([]);
+  });
+
+  it('builds a delete plan for a branch node including its descendants and derived connections', () => {
+    const rootShape = buildBoardMindmapRootShape({ x: 640, y: 360 });
+    const root = collectBoardMindmapNodeRecords([rootShape as never])[0];
+    const childShape = buildBoardMindmapChildShape(root, [root]);
+    const child = collectBoardMindmapNodeRecords([childShape as never])[0];
+    const grandChildShape = buildBoardMindmapChildShape(child, [root, child]);
+    const grandChild = collectBoardMindmapNodeRecords([grandChildShape as never])[0];
+
+    const deletePlan = buildBoardMindmapDeletePlan([root, child, grandChild], child.id);
+
+    expect(deletePlan.nodeShapeIds).toEqual([child.shapeId, grandChild.shapeId]);
+    expect(deletePlan.connectionShapeIds).toEqual([
+      buildBoardMindmapConnectionShapeId(child.id),
+      buildBoardMindmapConnectionShapeId(grandChild.id),
+    ]);
   });
 
   it('reclassifies the branch side when a node crosses the parent axis and keeps sibling order coherent', () => {

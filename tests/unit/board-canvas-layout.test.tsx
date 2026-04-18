@@ -30,6 +30,14 @@ describe('BoardCanvasLayout', () => {
           selectedColor: 'black',
           onApplyColor: vi.fn(),
         }}
+        mindmapNodeControls={{
+          visible: true,
+          x: 120,
+          y: 80,
+          canRemove: true,
+          onAddChild: vi.fn(),
+          onRemoveNode: vi.fn(),
+        }}
         stage={<div>canvas stage</div>}
       />,
     );
@@ -43,6 +51,8 @@ describe('BoardCanvasLayout', () => {
     expect(markup).toContain('Imagens');
     expect(markup).toContain('API');
     expect(markup).toContain('Tudo salvo');
+    expect(markup).toContain('Adicionar filho ao topico selecionado');
+    expect(markup).toContain('Remover topico selecionado');
     expect(markup).not.toContain('Board workspace');
     expect(markup).not.toContain('Arraste, conecte e deixe o autosave');
   });

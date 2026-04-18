@@ -708,6 +708,54 @@ h2 {
   white-space: nowrap;
 }
 
+.mindmap-node-controls {
+  position: absolute;
+  z-index: 455;
+  display: inline-flex;
+  gap: 0.38rem;
+  transform: translate(-50%, -100%);
+  padding: 0.32rem;
+  border: 1px solid rgba(53, 24, 26, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 252, 250, 0.96);
+  box-shadow: 0 14px 30px rgba(53, 24, 26, 0.16);
+  backdrop-filter: blur(10px);
+}
+
+.mindmap-node-controls__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid rgba(53, 24, 26, 0.12);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 238, 234, 0.96));
+  color: var(--accent-strong);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mindmap-node-controls__button--danger {
+  color: #b64232;
+}
+
+.mindmap-node-controls__button:hover,
+.mindmap-node-controls__button:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(209, 73, 46, 0.3);
+  box-shadow: 0 10px 20px rgba(53, 24, 26, 0.12);
+}
+
+.mindmap-node-controls__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .label-color-popover__label {
   font-size: 0.68rem;
   text-transform: uppercase;
