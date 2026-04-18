@@ -1,6 +1,8 @@
+'use client';
+
 import React, { ReactNode } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { BOARD_LABEL_COLOR_OPTIONS, BoardLabelColor } from '@/modules/boards/application/board-label-style';
 
 type ArchitectureDefinition = {
@@ -63,13 +65,32 @@ export function BoardCanvasLayout({
   mindmapNodeControls,
   stage,
 }: BoardCanvasLayoutProps) {
+  const router = useRouter();
+  const [isLeavingBoard, startLeavingBoard] = React.useTransition();
+
+  function handleReturnToBoards() {
+    if (isLeavingBoard) {
+      return;
+    }
+
+    startLeavingBoard(() => {
+      router.push('/');
+    });
+  }
+
   return (
     <main className="board-shell">
       <header className="board-toolbar">
         <div className="board-toolbar__main">
-          <Link className="ghost-link ghost-link--toolbar" href="/">
-            Voltar para boards
-          </Link>
+          <button
+            type="button"
+            className="ghost-link ghost-link--toolbar"
+            onClick={handleReturnToBoards}
+            disabled={isLeavingBoard}
+            data-pending={isLeavingBoard}
+          >
+            {isLeavingBoard ? 'Voltando...' : 'Voltar para boards'}
+          </button>
           {titleEditor}
         </div>
 

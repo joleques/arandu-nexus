@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
+import React, { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
 
 type BoardSummary = {
@@ -20,7 +20,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <button className="primary-button" type="submit" disabled={pending}>
+    <button className="primary-button" type="submit" disabled={pending} data-pending={pending}>
       {pending ? 'Criando...' : 'Criar board'}
     </button>
   );
@@ -30,17 +30,31 @@ function DeleteBoardButton() {
   const { pending } = useFormStatus();
 
   return (
-    <button className="ghost-link ghost-link--danger" type="submit" disabled={pending}>
+    <button className="ghost-link ghost-link--danger" type="submit" disabled={pending} data-pending={pending}>
       {pending ? 'Excluindo...' : 'Excluir'}
     </button>
   );
 }
 
 export function BoardDirectory({ boards, createBoardAction, deleteBoardAction }: BoardDirectoryProps) {
+  const router = useRouter();
+  const [isNavigating, startNavigation] = useTransition();
+  const [navigatingBoardId, setNavigatingBoardId] = useState<string | null>(null);
   const boardCountLabel = `${boards.length} ${boards.length === 1 ? 'board ativo' : 'boards ativos'}`;
 
+  function handleOpenBoard(boardId: string) {
+    if (isNavigating) {
+      return;
+    }
+
+    setNavigatingBoardId(boardId);
+    startNavigation(() => {
+      router.push(`/boards/${boardId}`);
+    });
+  }
+
   return (
-    <main className="shell shell--boards">
+    <main className="shell shell--boards" data-busy={isNavigating}>
       <section className="hero hero--boards">
         <div className="hero__content">
           <span className="eyebrow">Arandu Nexus</span>
@@ -115,13 +129,21 @@ export function BoardDirectory({ boards, createBoardAction, deleteBoardAction }:
               </article>
             ) : (
               boards.map((board) => (
-                <article className="board-card" key={board.id}>
-                  <Link className="board-card__link" href={`/boards/${board.id}`}>
+                <article className="board-card" key={board.id} data-pending={isNavigating && navigatingBoardId === board.id}>
+                  <button
+                    type="button"
+                    className="board-card__link"
+                    onClick={() => handleOpenBoard(board.id)}
+                    disabled={isNavigating}
+                    aria-busy={isNavigating && navigatingBoardId === board.id}
+                  >
                     <span className="board-card__eyebrow">Board</span>
                     <strong>{board.title}</strong>
                     <span>Atualizado em {new Date(board.updatedAt).toLocaleString('pt-BR')}</span>
-                    <span className="board-card__cta">Abrir workspace</span>
-                  </Link>
+                    <span className="board-card__cta">
+                      {isNavigating && navigatingBoardId === board.id ? 'Abrindo workspace...' : 'Abrir workspace'}
+                    </span>
+                  </button>
 
                   <form
                     action={deleteBoardAction.bind(null, board.id)}

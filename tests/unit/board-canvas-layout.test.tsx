@@ -5,6 +5,12 @@ import { BOARD_ARCHITECTURE_FLOW_DEFINITIONS, BOARD_ARCHITECTURE_NODE_DEFINITION
 import { BoardCanvasLayout } from '@/modules/boards/ui/board-canvas-layout';
 import { getSaveLabel } from '@/modules/boards/ui/board-save-state';
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
+
 describe('BoardCanvasLayout', () => {
   it('renders the compact toolbar, library sections and stage overlay', () => {
     const markup = renderToStaticMarkup(
