@@ -4,6 +4,7 @@ import {
   buildBoardMindmapDeletePlan,
   buildBoardMindmapChildShape,
   buildBoardMindmapCollapseToggleUpdates,
+  collectBoardMindmapConnectionIds,
   buildBoardMindmapConnectionLockUpdates,
   buildBoardMindmapConnectionShapeId,
   buildBoardMindmapConnectionShapes,
@@ -210,6 +211,21 @@ describe('board mindmap', () => {
 
     expect(orphanIds).toEqual([connections[0].id]);
     expect(healthyIds).toEqual([]);
+  });
+
+  it('collects all derived connection ids for hard cleanup when the tree disappears after movement or delete', () => {
+    const rootShape = buildBoardMindmapRootShape({ x: 640, y: 360 });
+    const root = collectBoardMindmapNodeRecords([rootShape as never])[0];
+    const childShape = buildBoardMindmapChildShape(root, [root]);
+    const child = collectBoardMindmapNodeRecords([childShape as never])[0];
+    const movedChild = {
+      ...child,
+      x: child.x + 240,
+      y: child.y + 120,
+    };
+    const connections = buildBoardMindmapConnectionShapes([root, movedChild]);
+
+    expect(collectBoardMindmapConnectionIds(connections as never)).toEqual([buildBoardMindmapConnectionShapeId(child.id)]);
   });
 
   it('builds a delete plan for a branch node including its descendants and derived connections', () => {

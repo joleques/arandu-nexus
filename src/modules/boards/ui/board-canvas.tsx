@@ -431,7 +431,7 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
           });
         });
       });
-    });
+    }, { ignoreShapeLock: true });
   }, [editor]);
 
   const rebuildMindmapLayout = useCallback(() => {
@@ -519,7 +519,9 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
       const residualConnectionIds = collectBoardMindmapConnectionIds(shapes);
 
       if (residualConnectionIds.length > 0) {
-        editor.deleteShapes(residualConnectionIds);
+        editor.run(() => {
+          editor.deleteShapes(residualConnectionIds);
+        }, { ignoreShapeLock: true });
       }
 
       return;
@@ -533,7 +535,9 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
     }
 
     if (orphanConnectionIds.length > 0) {
-      editor.deleteShapes(orphanConnectionIds);
+      editor.run(() => {
+        editor.deleteShapes(orphanConnectionIds);
+      }, { ignoreShapeLock: true });
     }
 
     rebuildMindmapConnections(nodes);
