@@ -52,11 +52,14 @@ Depois abra `http://localhost:3000`.
 ## 4. Testar o fluxo principal do MVP
 
 1. Na pagina inicial, crie um board informando um titulo.
-2. Confirme o redirecionamento automatico para a rota do board.
+2. Confirme o redirecionamento automatico para a rota do board e observe o feedback visual de carregamento.
 3. No canvas, use a biblioteca lateral para inserir elementos, fluxos e imagens.
-4. Edite o titulo no topo do workspace.
-5. Aguarde o autosave persistir o estado do board.
-6. Volte para a listagem de boards e reabra o mesmo board para validar a persistencia.
+4. Clique no item `Mindmap` da secao `Elementos` para criar um topico central.
+5. Use os controles `+` e `-` do proprio no para adicionar e remover topicos.
+6. Reorganize ou mova ramos do mindmap para validar o comportamento estrutural.
+7. Edite o titulo no topo do workspace.
+8. Aguarde o autosave persistir o estado do board.
+9. Volte para a listagem de boards e reabra o mesmo board para validar a persistencia e o feedback visual da navegacao.
 
 ## 5. Comandos uteis durante o uso local
 
@@ -80,8 +83,11 @@ make build
 - listagem persistida
 - abertura do workspace
 - uso do canvas com zoom e pan
+- criacao e expansao de mindmap
+- controles contextuais do mindmap
 - persistencia automatica do documento atual
 - persistencia do titulo do board
+- feedback visual de carregamento em acoes mais lentas
 
 ## Solucao de problemas rapida
 

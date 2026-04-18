@@ -35,9 +35,9 @@ Antes de iniciar qualquer implementação, o agente deve ler nesta ordem:
 - `v3-mindmap-interacoes-e-refino`
   Evolução do mindmap com refinamento de interação, colapso de ramos e fluidez de uso.
 - `v4-comentarios-e-snapshots`
-  Evolução do board com comentários ancorados e versionamento simples.
+  Evolução opcional posterior do board com comentários ancorados e versionamento simples.
 - `v5-templates-export-e-hardening`
-  Fechamento do MVP com aceleração de uso, export e robustez mínima.
+  Evolução opcional posterior com aceleração de uso, export e robustez mínima.
 
 ## Prioridade Atual do Roadmap
 
@@ -48,6 +48,16 @@ Isso significa:
 1. a antiga `v2` passa a ser `v4`;
 2. a antiga `v3` passa a ser `v5`;
 3. as novas `v2` e `v3` ficam reservadas ao fluxo de mindmap.
+
+## Recorte Atual do MVP
+
+O MVP considerado entregue neste momento vai ate a `v3`.
+
+Isso significa:
+
+1. `v1`, `v2` e `v3` representam o escopo atual do produto;
+2. `v4` e `v5` permanecem documentadas como proximas etapas possiveis;
+3. `v4` e `v5` nao fazem parte do fechamento atual do MVP.
 
 ## Fechamento Obrigatório por Versão
 

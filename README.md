@@ -10,12 +10,14 @@ Arandu Nexus e um workspace visual para raciocinio arquitetural. A proposta do M
 - Entrada direta no canvas apos criar um board
 - Canvas livre com zoom, pan e autosave do documento atual
 - Biblioteca lateral com elementos, fluxos e imagens para diagramacao
+- Mindmap estrutural com topico central, filhos, irmaos e reorganizacao
+- Colapso e expansao de ramos com controles contextuais no proprio no
 - Edicao do titulo do board com persistencia
-- Base pronta para evoluir comentarios ancorados e snapshots nas proximas etapas
+- Feedback visual de carregamento para criar, abrir e voltar entre telas
 
 ## Como a experiencia aparece hoje
 
-O produto abre com uma area de boards que funciona como biblioteca e ponto de entrada do workspace. Dali, o usuario cria um board, entra no canvas e segue montando o diagrama sem comecar do zero.
+O produto abre com uma area de boards que funciona como biblioteca e ponto de entrada do workspace. Dali, o usuario cria um board, entra no canvas e segue montando o diagrama sem comecar do zero. Dentro do board, pode diagramar livremente, iniciar um mindmap pela biblioteca de elementos e expandir a arvore direto pelos controles contextuais dos nos.
 
 ![Workspace do board](documentacao/images/board.png)
 
@@ -56,4 +58,4 @@ O passo a passo completo esta em [documentacao/get-started.md](documentacao/get-
 
 ## Contexto do projeto
 
-O contexto oficial do MVP, escopo atual e proximas etapas estao centralizados em [documentacao/project-context.md](documentacao/project-context.md).
+O contexto oficial do MVP, escopo atual e proximas etapas estao centralizados em [documentacao/project-context.md](documentacao/project-context.md). Neste momento, o MVP considerado entregue vai ate a `V3`, com `V4` e `V5` mantidas como proximas etapas possiveis fora do escopo atual.
