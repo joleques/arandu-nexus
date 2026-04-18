@@ -1,7 +1,7 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import { BoardDirectory } from '@/modules/boards/ui/board-directory';
+import { BoardDirectory, shouldBlockBoardDirectoryInteractions } from '@/modules/boards/ui/board-directory';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -10,6 +10,13 @@ vi.mock('next/navigation', () => ({
 }));
 
 describe('BoardDirectory', () => {
+  it('blocks the whole home interaction surface while create or navigation is in progress', () => {
+    expect(shouldBlockBoardDirectoryInteractions({ isCreating: true, isNavigating: false })).toBe(true);
+    expect(shouldBlockBoardDirectoryInteractions({ isCreating: false, isNavigating: true })).toBe(true);
+    expect(shouldBlockBoardDirectoryInteractions({ isCreating: true, isNavigating: true })).toBe(true);
+    expect(shouldBlockBoardDirectoryInteractions({ isCreating: false, isNavigating: false })).toBe(false);
+  });
+
   it('renders create, open and delete actions with user-facing copy for slower interactions', () => {
     const markup = renderToStaticMarkup(
       <BoardDirectory

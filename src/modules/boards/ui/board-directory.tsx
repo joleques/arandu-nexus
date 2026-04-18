@@ -16,21 +16,27 @@ type BoardDirectoryProps = {
   deleteBoardAction: (boardId: string) => Promise<void>;
 };
 
-function SubmitButton() {
+export function shouldBlockBoardDirectoryInteractions(input: { isCreating: boolean; isNavigating: boolean }) {
+  return input.isCreating || input.isNavigating;
+}
+
+function SubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
+  const isDisabled = pending || disabled;
 
   return (
-    <button className="primary-button" type="submit" disabled={pending} data-pending={pending}>
+    <button className="primary-button" type="submit" disabled={isDisabled} data-pending={pending}>
       {pending ? 'Criando...' : 'Criar board'}
     </button>
   );
 }
 
-function DeleteBoardButton() {
+function DeleteBoardButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
+  const isDisabled = pending || disabled;
 
   return (
-    <button className="ghost-link ghost-link--danger" type="submit" disabled={pending} data-pending={pending}>
+    <button className="ghost-link ghost-link--danger" type="submit" disabled={isDisabled} data-pending={pending}>
       {pending ? 'Excluindo...' : 'Excluir'}
     </button>
   );
@@ -39,11 +45,13 @@ function DeleteBoardButton() {
 export function BoardDirectory({ boards, createBoardAction, deleteBoardAction }: BoardDirectoryProps) {
   const router = useRouter();
   const [isNavigating, startNavigation] = useTransition();
+  const [isCreating, setIsCreating] = useState(false);
   const [navigatingBoardId, setNavigatingBoardId] = useState<string | null>(null);
   const boardCountLabel = `${boards.length} ${boards.length === 1 ? 'board ativo' : 'boards ativos'}`;
+  const isBusy = shouldBlockBoardDirectoryInteractions({ isCreating, isNavigating });
 
   function handleOpenBoard(boardId: string) {
-    if (isNavigating) {
+    if (isBusy) {
       return;
     }
 
@@ -54,7 +62,7 @@ export function BoardDirectory({ boards, createBoardAction, deleteBoardAction }:
   }
 
   return (
-    <main className="shell shell--boards" data-busy={isNavigating}>
+    <main className="shell shell--boards" data-busy={isBusy}>
       <section className="hero hero--boards">
         <div className="hero__content">
           <span className="eyebrow">Arandu Nexus</span>
@@ -103,12 +111,25 @@ export function BoardDirectory({ boards, createBoardAction, deleteBoardAction }:
             <p>Defina um titulo objetivo e siga para o canvas sem precisar atravessar uma burocracia cenografica.</p>
           </div>
 
-          <form action={createBoardAction} className="board-form">
+          <form
+            action={createBoardAction}
+            className="board-form"
+            onSubmit={() => {
+              setIsCreating(true);
+            }}
+          >
             <label className="field">
               <span>Titulo</span>
-              <input name="title" type="text" maxLength={80} placeholder="Ex: arquitetura de onboarding" required />
+              <input
+                name="title"
+                type="text"
+                maxLength={80}
+                placeholder="Ex: arquitetura de onboarding"
+                required
+                disabled={isBusy}
+              />
             </label>
-            <SubmitButton />
+            <SubmitButton disabled={isBusy} />
           </form>
         </section>
 
@@ -134,7 +155,7 @@ export function BoardDirectory({ boards, createBoardAction, deleteBoardAction }:
                     type="button"
                     className="board-card__link"
                     onClick={() => handleOpenBoard(board.id)}
-                    disabled={isNavigating}
+                    disabled={isBusy}
                     aria-busy={isNavigating && navigatingBoardId === board.id}
                   >
                     <span className="board-card__eyebrow">Board</span>
@@ -149,12 +170,17 @@ export function BoardDirectory({ boards, createBoardAction, deleteBoardAction }:
                     action={deleteBoardAction.bind(null, board.id)}
                     className="board-card__actions"
                     onSubmit={(event) => {
+                      if (isBusy) {
+                        event.preventDefault();
+                        return;
+                      }
+
                       if (!window.confirm(`Deseja excluir o board "${board.title}"?`)) {
                         event.preventDefault();
                       }
                     }}
                   >
-                    <DeleteBoardButton />
+                    <DeleteBoardButton disabled={isBusy} />
                   </form>
                 </article>
               ))
