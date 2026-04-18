@@ -19,7 +19,6 @@ import {
   buildBoardImageLibraryShape,
 } from '@/modules/boards/application/board-image-library';
 import {
-  BOARD_MINDMAP_ACTION_DEFINITIONS,
   buildBoardMindmapDeletePlan,
   buildBoardMindmapChildShape,
   buildBoardMindmapCollapseToggleUpdates,
@@ -34,7 +33,6 @@ import {
   collectBoardMindmapNodeRecords,
   collectBoardMindmapOrphanConnectionIds,
   getBoardMindmapRoot,
-  getBoardMindmapSelectionHint,
   layoutBoardMindmap,
   type BoardMindmapActionKind,
   type BoardMindmapNodeRecord,
@@ -94,7 +92,6 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
   const [selectedLabelColor, setSelectedLabelColor] = useState<BoardLabelColor>('black');
   const [labelPopover, setLabelPopover] = useState<LabelPopoverState>(hiddenPopoverState);
   const [mindmapNodeControls, setMindmapNodeControls] = useState<MindmapNodeControlsState>(hiddenMindmapNodeControlsState);
-  const [mindmapHint, setMindmapHint] = useState('Crie um topico central para iniciar o mindmap.');
   const [nodeInsertions, setNodeInsertions] = useState(0);
   const [flowInsertions, setFlowInsertions] = useState(0);
   const [imageInsertions, setImageInsertions] = useState(0);
@@ -215,8 +212,6 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
       const mindmapNodes = collectBoardMindmapNodeRecords(editor.getCurrentPageShapes());
       const textColorMode = getBoardTextColorMode(selectedShapes);
       const selectedMindmapNodes = mindmapNodes.filter((node) => selectedShapeIds.includes(node.shapeId));
-
-      setMindmapHint(getBoardMindmapSelectionHint(mindmapNodes, selectedShapeIds));
 
       if (selectedMindmapNodes.length === 1) {
         const selectedNode = selectedMindmapNodes[0];
@@ -738,6 +733,11 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
       return;
     }
 
+    if (kind === 'mindmap') {
+      handleMindmapAction('create-root');
+      return;
+    }
+
     const viewportCenter = editor.getViewportPageBounds().center;
     const x = viewportCenter.x - 180 + (nodeInsertions % 3) * 210;
     const y = viewportCenter.y - 160 + (Math.floor(nodeInsertions / 3) % 3) * 150;
@@ -807,13 +807,10 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
       saveState={saveState}
       nodeDefinitions={BOARD_ARCHITECTURE_NODE_DEFINITIONS}
       flowDefinitions={BOARD_ARCHITECTURE_FLOW_DEFINITIONS}
-      mindmapActions={BOARD_MINDMAP_ACTION_DEFINITIONS}
-      mindmapHint={mindmapHint}
       imageDefinitions={BOARD_IMAGE_LIBRARY_ITEMS}
       controlsDisabled={!editor}
       onInsertNode={(kind) => handleInsertNode(kind as BoardArchitectureNodeKind)}
       onInsertFlow={(kind) => handleInsertFlow(kind as BoardArchitectureFlowKind)}
-      onMindmapAction={handleMindmapAction}
       onInsertImage={handleInsertImage}
       labelPopover={{
         ...labelPopover,

@@ -12,6 +12,7 @@ export const BOARD_ARCHITECTURE_NODE_KINDS = [
   'persona-ai',
   'automated-flow',
   'aws-system',
+  'mindmap',
 ] as const;
 
 export const BOARD_ARCHITECTURE_FLOW_KINDS = ['sync-request', 'async-event', 'queue-flow', 'topic-pubsub'] as const;
@@ -176,6 +177,18 @@ export const BOARD_ARCHITECTURE_NODE_DEFINITIONS: readonly BoardArchitectureNode
     sourceHeight: 799,
     width: 160,
     height: 100,
+  },
+  {
+    kind: 'mindmap',
+    label: 'Mindmap',
+    description: 'Cria um topico central para iniciar o mapa mental',
+    visual: 'geo',
+    geo: 'oval',
+    color: 'orange',
+    fill: 'semi',
+    dash: 'solid',
+    width: 160,
+    height: 96,
   },
 ] as const;
 

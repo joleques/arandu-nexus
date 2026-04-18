@@ -22,6 +22,7 @@ describe('board architecture elements', () => {
       'persona-ai',
       'automated-flow',
       'aws-system',
+      'mindmap',
     ]);
 
     expect(BOARD_ARCHITECTURE_FLOW_DEFINITIONS.map((definition) => definition.kind)).toEqual([
@@ -38,6 +39,20 @@ describe('board architecture elements', () => {
     expect(microservice.type).toBe('geo');
     expect(microservice.meta).toMatchObject({ architecture: { semanticClass: 'node', semanticType: 'microservice' } });
     expect(microservice.props).toMatchObject({ geo: 'cloud', color: 'blue', fill: 'semi' });
+  });
+
+  it('exposes mindmap as a first-class menu item with its own semantic catalog entry', () => {
+    const mindmap = BOARD_ARCHITECTURE_NODE_DEFINITIONS.find((definition) => definition.kind === 'mindmap');
+
+    expect(mindmap).toMatchObject({
+      kind: 'mindmap',
+      label: 'Mindmap',
+      description: 'Cria um topico central para iniciar o mapa mental',
+      visual: 'geo',
+      geo: 'oval',
+      color: 'orange',
+      fill: 'semi',
+    });
   });
 
   it('uses the real asset dimensions for queue and topic images to avoid visual clipping', () => {

@@ -1,7 +1,6 @@
 import React, { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { type BoardMindmapActionKind } from '@/modules/boards/application/board-mindmap';
 import { BOARD_LABEL_COLOR_OPTIONS, BoardLabelColor } from '@/modules/boards/application/board-label-style';
 
 type ArchitectureDefinition = {
@@ -14,12 +13,6 @@ type ImageLibraryDefinition = {
   kind: string;
   label: string;
   src: string;
-};
-
-type MindmapActionDefinition = {
-  kind: BoardMindmapActionKind;
-  label: string;
-  description: string;
 };
 
 type LabelPopoverProps = {
@@ -45,13 +38,10 @@ type BoardCanvasLayoutProps = {
   saveState: 'idle' | 'saving' | 'saved' | 'error';
   nodeDefinitions: readonly ArchitectureDefinition[];
   flowDefinitions: readonly ArchitectureDefinition[];
-  mindmapActions: readonly MindmapActionDefinition[];
-  mindmapHint: string;
   imageDefinitions: readonly ImageLibraryDefinition[];
   controlsDisabled: boolean;
   onInsertNode: (kind: string) => void;
   onInsertFlow: (kind: string) => void;
-  onMindmapAction: (kind: BoardMindmapActionKind) => void;
   onInsertImage: (kind: string) => void;
   labelPopover: LabelPopoverProps;
   mindmapNodeControls: MindmapNodeControlsProps;
@@ -64,13 +54,10 @@ export function BoardCanvasLayout({
   saveState,
   nodeDefinitions,
   flowDefinitions,
-  mindmapActions,
-  mindmapHint,
   imageDefinitions,
   controlsDisabled,
   onInsertNode,
   onInsertFlow,
-  onMindmapAction,
   onInsertImage,
   labelPopover,
   mindmapNodeControls,
@@ -138,29 +125,6 @@ export function BoardCanvasLayout({
                 >
                   <strong>{definition.label}</strong>
                   <span>{definition.description}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="board-architecture-panel__section">
-            <div className="board-architecture-panel__section-header">
-              <span className="board-architecture-panel__heading">Mindmap</span>
-              <span>{mindmapActions.length} acoes</span>
-            </div>
-            <p className="mindmap-note">{mindmapHint}</p>
-            <div className="board-architecture-panel__grid board-architecture-panel__grid--compact">
-              {mindmapActions.map((action) => (
-                <button
-                  key={action.kind}
-                  type="button"
-                  className="architecture-chip architecture-chip--mindmap architecture-chip--compact"
-                  onClick={() => onMindmapAction(action.kind)}
-                  disabled={controlsDisabled}
-                  title={action.description}
-                >
-                  <strong>{action.label}</strong>
-                  <span>{action.description}</span>
                 </button>
               ))}
             </div>
