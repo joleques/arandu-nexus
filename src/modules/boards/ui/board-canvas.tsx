@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TLShapePartial, TLStoreSnapshot } from '@tldraw/tlschema';
 import { DefaultColorStyle, DefaultLabelColorStyle, Editor, Tldraw, getSnapshot } from 'tldraw';
 import { createBoardEditorAssetStore } from '@/modules/boards/application/board-editor-assets';
@@ -18,6 +18,26 @@ import {
   buildBoardImageLibraryAsset,
   buildBoardImageLibraryShape,
 } from '@/modules/boards/application/board-image-library';
+import {
+  BOARD_MINDMAP_ACTION_DEFINITIONS,
+  buildBoardMindmapChildShape,
+  buildBoardMindmapCollapseToggleUpdates,
+  buildBoardMindmapConnectionShapeId,
+  buildBoardMindmapConnectionLockUpdates,
+  buildBoardMindmapConnectionShapes,
+  buildBoardMindmapRootShape,
+  buildBoardMindmapSemanticPlacementUpdates,
+  buildBoardMindmapSiblingShape,
+  collectBoardMindmapConnectionIds,
+  collectBoardMindmapConnectionRecords,
+  collectBoardMindmapNodeRecords,
+  collectBoardMindmapOrphanConnectionIds,
+  getBoardMindmapRoot,
+  getBoardMindmapSelectionHint,
+  layoutBoardMindmap,
+  type BoardMindmapActionKind,
+  type BoardMindmapNodeRecord,
+} from '@/modules/boards/application/board-mindmap';
 import {
   BoardLabelColor,
   canApplyBoardLabelColor,
@@ -58,9 +78,13 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
   const [lastPersistedTitle, setLastPersistedTitle] = useState(board.title);
   const [selectedLabelColor, setSelectedLabelColor] = useState<BoardLabelColor>('black');
   const [labelPopover, setLabelPopover] = useState<LabelPopoverState>(hiddenPopoverState);
+  const [mindmapHint, setMindmapHint] = useState('Crie um topico central para iniciar o mindmap.');
   const [nodeInsertions, setNodeInsertions] = useState(0);
   const [flowInsertions, setFlowInsertions] = useState(0);
   const [imageInsertions, setImageInsertions] = useState(0);
+  const mindmapSyncFrameRef = useRef<number | null>(null);
+  const lastMindmapSignatureRef = useRef('');
+  const isMindmapSyncingRef = useRef(false);
 
   const assetStore = useMemo(() => createBoardEditorAssetStore(board.id), [board.id]);
 
@@ -171,7 +195,10 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
       const selectedShapeIds = editor.getSelectedShapeIds();
       const selectionBounds = editor.getSelectionPageBounds();
       const selectedShapes = selectedShapeIds.map((id) => editor.getShape(id));
+      const mindmapNodes = collectBoardMindmapNodeRecords(editor.getCurrentPageShapes());
       const textColorMode = getBoardTextColorMode(selectedShapes);
+
+      setMindmapHint(getBoardMindmapSelectionHint(mindmapNodes, selectedShapeIds));
 
       if (!shouldShowBoardLabelPopover(selectedShapes) || !selectionBounds) {
         setLabelPopover((state) => (state.visible ? hiddenPopoverState : state));
@@ -256,6 +283,390 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
     }
   }
 
+  const getMindmapNodes = useCallback((): BoardMindmapNodeRecord[] => {
+    if (!editor) {
+      return [];
+    }
+
+    return collectBoardMindmapNodeRecords(editor.getCurrentPageShapes());
+  }, [editor]);
+
+  const getSelectedMindmapNode = useCallback((nodes: BoardMindmapNodeRecord[]) => {
+    if (!editor) {
+      return null;
+    }
+
+    const selectedShapeIds = editor.getSelectedShapeIds();
+
+    return nodes.find((node) => selectedShapeIds.includes(node.shapeId)) ?? null;
+  }, [editor]);
+
+  const rebuildMindmapConnections = useCallback((nodesOverride?: BoardMindmapNodeRecord[]) => {
+    if (!editor) {
+      return;
+    }
+
+    const shapes = editor.getCurrentPageShapes();
+    const nodes = nodesOverride ?? collectBoardMindmapNodeRecords(shapes);
+    const desiredConnections = buildBoardMindmapConnectionShapes(nodes);
+    const desiredIds = new Set(
+      desiredConnections.map((shape) => shape.id as ReturnType<typeof buildBoardMindmapConnectionShapeId>),
+    );
+    const existingConnections = collectBoardMindmapConnectionRecords(shapes);
+    const obsoleteIds = existingConnections
+      .filter((connection) => !desiredIds.has(connection.shapeId))
+      .map((connection) => connection.shapeId);
+
+    editor.run(() => {
+      if (obsoleteIds.length > 0) {
+        editor.deleteShapes(obsoleteIds);
+      }
+
+      const currentConnectionIds = new Set(
+        collectBoardMindmapConnectionRecords(editor.getCurrentPageShapes()).map((connection) => connection.shapeId),
+      );
+      const updates: TLShapePartial[] = [];
+
+      desiredConnections.forEach((shape) => {
+        const shapeId = shape.id as ReturnType<typeof buildBoardMindmapConnectionShapeId>;
+
+        if (currentConnectionIds.has(shapeId)) {
+          updates.push(shape);
+          return;
+        }
+
+        editor.createShape(shape);
+      });
+
+      if (updates.length > 0) {
+        editor.updateShapes(updates);
+      }
+
+      desiredConnections.forEach((shape) => {
+        const meta = (shape.meta as { mindmap?: { sourceNodeId?: string; targetNodeId?: string } } | undefined)?.mindmap;
+
+        if (!meta?.sourceNodeId || !meta.targetNodeId) {
+          return;
+        }
+
+        const arrowId = shape.id as ReturnType<typeof buildBoardMindmapConnectionShapeId>;
+        const targetNode = nodes.find((node) => node.id === meta.targetNodeId);
+        const isLeftBranch = targetNode?.branchSide === 'left';
+        const bindings = [
+          {
+            terminal: 'start' as const,
+            toId: meta.sourceNodeId,
+            normalizedAnchor: isLeftBranch ? { x: 0, y: 0.5 } : { x: 1, y: 0.5 },
+          },
+          {
+            terminal: 'end' as const,
+            toId: meta.targetNodeId,
+            normalizedAnchor: isLeftBranch ? { x: 1, y: 0.5 } : { x: 0, y: 0.5 },
+          },
+        ];
+
+        bindings.forEach((bindingConfig) => {
+          const existing = editor
+            .getBindingsFromShape(arrowId, 'arrow')
+            .find((binding) => binding.props.terminal === bindingConfig.terminal);
+
+          const props = {
+            terminal: bindingConfig.terminal,
+            normalizedAnchor: bindingConfig.normalizedAnchor,
+            isExact: false,
+            isPrecise: true,
+            snap: 'edge' as const,
+          };
+
+          if (existing) {
+            editor.updateBinding({
+              ...existing,
+              toId: bindingConfig.toId as typeof existing.toId,
+              props,
+            });
+            return;
+          }
+
+          editor.createBinding({
+            type: 'arrow',
+            fromId: arrowId,
+            toId: bindingConfig.toId as typeof arrowId,
+            props,
+          });
+        });
+      });
+    });
+  }, [editor]);
+
+  const rebuildMindmapLayout = useCallback(() => {
+    if (!editor) {
+      return;
+    }
+
+    const shapes = editor.getCurrentPageShapes();
+    const nodes = collectBoardMindmapNodeRecords(shapes);
+    const root = getBoardMindmapRoot(nodes);
+
+    if (!root) {
+      return;
+    }
+
+    const rootCenter = {
+      x: root.x + root.w / 2,
+      y: root.y + root.h / 2,
+    };
+    const { nodeUpdates, positionedNodes } = layoutBoardMindmap(nodes, rootCenter);
+
+    editor.run(() => {
+      if (nodeUpdates.length > 0) {
+        editor.updateShapes(nodeUpdates);
+      }
+    });
+
+    rebuildMindmapConnections(positionedNodes);
+  }, [editor, rebuildMindmapConnections]);
+
+  const getMindmapSignature = useCallback((nodes: BoardMindmapNodeRecord[]) => {
+    return nodes
+      .map((node) => `${node.id}:${node.parentId ?? 'root'}:${node.collapsed ? 1 : 0}:${node.branchSide}:${node.order}`)
+      .sort()
+      .join('|');
+  }, []);
+
+  const isMindmapEditorStateStable = useCallback(() => {
+    if (!editor) {
+      return false;
+    }
+
+    return (
+      !editor.getEditingShapeId() &&
+      !editor.isIn('select.translating') &&
+      !editor.isIn('select.resizing') &&
+      !editor.isIn('select.rotating') &&
+      !editor.isIn('select.dragging_handle') &&
+      !editor.isIn('select.pointing_handle') &&
+      !editor.isIn('select.crop')
+    );
+  }, [editor]);
+
+  const syncMindmapDocument = useCallback(() => {
+    if (!editor) {
+      return;
+    }
+
+    if (isMindmapSyncingRef.current) {
+      return;
+    }
+
+    isMindmapSyncingRef.current = true;
+
+    try {
+    let shapes = editor.getCurrentPageShapes();
+    let nodes = collectBoardMindmapNodeRecords(shapes);
+    const semanticUpdates = buildBoardMindmapSemanticPlacementUpdates(nodes);
+
+    if (semanticUpdates.length > 0) {
+      editor.updateShapes(semanticUpdates);
+      shapes = editor.getCurrentPageShapes();
+      nodes = collectBoardMindmapNodeRecords(shapes);
+    }
+
+    const lockUpdates = buildBoardMindmapConnectionLockUpdates(shapes);
+
+    if (lockUpdates.length > 0) {
+      editor.updateShapes(lockUpdates);
+      shapes = editor.getCurrentPageShapes();
+    }
+
+    if (nodes.length === 0) {
+      lastMindmapSignatureRef.current = '';
+      const residualConnectionIds = collectBoardMindmapConnectionIds(shapes);
+
+      if (residualConnectionIds.length > 0) {
+        editor.deleteShapes(residualConnectionIds);
+      }
+
+      return;
+    }
+
+    const orphanConnectionIds = collectBoardMindmapOrphanConnectionIds(shapes, nodes);
+    const nextSignature = getMindmapSignature(nodes);
+
+    if (lockUpdates.length === 0 && orphanConnectionIds.length === 0 && nextSignature === lastMindmapSignatureRef.current) {
+      return;
+    }
+
+    if (orphanConnectionIds.length > 0) {
+      editor.deleteShapes(orphanConnectionIds);
+    }
+
+    rebuildMindmapConnections(nodes);
+    lastMindmapSignatureRef.current = nextSignature;
+    } finally {
+      isMindmapSyncingRef.current = false;
+    }
+  }, [editor, getMindmapSignature, rebuildMindmapConnections]);
+
+  const handleMindmapAction = useCallback((kind: BoardMindmapActionKind) => {
+    if (!editor) {
+      return;
+    }
+
+    const nodes = getMindmapNodes();
+    const selectedNode = getSelectedMindmapNode(nodes);
+
+    switch (kind) {
+      case 'create-root': {
+        const root = getBoardMindmapRoot(nodes);
+
+        if (root) {
+          editor.select(root.shapeId);
+          rebuildMindmapLayout();
+          return;
+        }
+
+        const rootShape = buildBoardMindmapRootShape(editor.getViewportPageBounds().center);
+
+        editor.createShape(rootShape).select(rootShape.id);
+        rebuildMindmapLayout();
+        return;
+      }
+
+      case 'create-child': {
+        if (!selectedNode) {
+          return;
+        }
+
+        if (selectedNode.collapsed) {
+          editor.updateShapes(buildBoardMindmapCollapseToggleUpdates(nodes, selectedNode.id, false));
+        }
+
+        const childShape = buildBoardMindmapChildShape(selectedNode, nodes);
+
+        editor.createShape(childShape).select(childShape.id);
+        rebuildMindmapLayout();
+        return;
+      }
+
+      case 'create-sibling': {
+        if (!selectedNode || !selectedNode.parentId) {
+          return;
+        }
+
+        const siblingShape = buildBoardMindmapSiblingShape(selectedNode, nodes);
+
+        editor.createShape(siblingShape).select(siblingShape.id);
+        rebuildMindmapLayout();
+        return;
+      }
+
+      case 'toggle-collapse': {
+        if (!selectedNode) {
+          return;
+        }
+
+        editor.updateShapes(buildBoardMindmapCollapseToggleUpdates(nodes, selectedNode.id));
+        rebuildMindmapLayout();
+        return;
+      }
+
+      case 'organize': {
+        rebuildMindmapLayout();
+        return;
+      }
+    }
+  }, [editor, getMindmapNodes, getSelectedMindmapNode, rebuildMindmapLayout]);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const currentEditor = editor;
+
+    function handleKeydown(event: KeyboardEvent) {
+      if (currentEditor.getEditingShapeId()) {
+        return;
+      }
+
+      const nodes = getMindmapNodes();
+      const selectedNode = getSelectedMindmapNode(nodes);
+
+      if (!selectedNode) {
+        return;
+      }
+
+      if (event.key === 'Enter' && !event.metaKey && !event.ctrlKey) {
+        event.preventDefault();
+        handleMindmapAction('create-child');
+        return;
+      }
+
+      if (event.key === 'Tab' && !event.shiftKey) {
+        event.preventDefault();
+        handleMindmapAction('create-sibling');
+        return;
+      }
+
+      if (event.key === 'Tab' && event.shiftKey) {
+        event.preventDefault();
+        handleMindmapAction('toggle-collapse');
+        return;
+      }
+
+      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        handleMindmapAction('organize');
+      }
+    }
+
+    window.addEventListener('keydown', handleKeydown);
+
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [editor, getMindmapNodes, getSelectedMindmapNode, handleMindmapAction]);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const scheduleMindmapSync = () => {
+      if (mindmapSyncFrameRef.current !== null) {
+        return;
+      }
+
+      mindmapSyncFrameRef.current = window.requestAnimationFrame(() => {
+        mindmapSyncFrameRef.current = null;
+
+        if (!isMindmapEditorStateStable()) {
+          scheduleMindmapSync();
+          return;
+        }
+
+        syncMindmapDocument();
+      });
+    };
+
+    scheduleMindmapSync();
+
+    const removeOperationHandler = editor.sideEffects.registerOperationCompleteHandler(() => {
+      if (isMindmapSyncingRef.current) {
+        return;
+      }
+
+      scheduleMindmapSync();
+    });
+
+    return () => {
+      removeOperationHandler();
+
+      if (mindmapSyncFrameRef.current !== null) {
+        window.cancelAnimationFrame(mindmapSyncFrameRef.current);
+        mindmapSyncFrameRef.current = null;
+      }
+    };
+  }, [editor, isMindmapEditorStateStable, syncMindmapDocument]);
+
   function handleInsertNode(kind: BoardArchitectureNodeKind) {
     if (!editor) {
       return;
@@ -330,10 +741,13 @@ export function BoardCanvas({ board }: BoardCanvasProps) {
       saveState={saveState}
       nodeDefinitions={BOARD_ARCHITECTURE_NODE_DEFINITIONS}
       flowDefinitions={BOARD_ARCHITECTURE_FLOW_DEFINITIONS}
+      mindmapActions={BOARD_MINDMAP_ACTION_DEFINITIONS}
+      mindmapHint={mindmapHint}
       imageDefinitions={BOARD_IMAGE_LIBRARY_ITEMS}
       controlsDisabled={!editor}
       onInsertNode={(kind) => handleInsertNode(kind as BoardArchitectureNodeKind)}
       onInsertFlow={(kind) => handleInsertFlow(kind as BoardArchitectureFlowKind)}
+      onMindmapAction={handleMindmapAction}
       onInsertImage={handleInsertImage}
       labelPopover={{
         ...labelPopover,

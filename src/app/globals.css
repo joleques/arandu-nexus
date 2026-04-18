@@ -667,6 +667,17 @@ h2 {
   background: rgba(255, 243, 239, 0.96);
 }
 
+.architecture-chip--mindmap {
+  background: linear-gradient(180deg, rgba(246, 255, 244, 0.98), rgba(232, 246, 255, 0.94));
+}
+
+.mindmap-note {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
 .architecture-chip:disabled {
   opacity: 0.55;
   cursor: not-allowed;

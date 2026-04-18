@@ -71,7 +71,7 @@ A v1 persiste o `currentDocument` do board como snapshot serializado do canvas. 
 
 ## Etapa Atual de Implementação
 
-O projeto está com a **v1-boards-e-canvas implementada** e pronto para iniciar a `v2-comentarios-e-snapshots`.
+O projeto está com a **v1-boards-e-canvas implementada** e teve o roadmap operacional repriorizado para iniciar a `v2-mindmap-estrutural`.
 
 Estado atual observado no repositório:
 
@@ -84,14 +84,14 @@ Estado atual observado no repositório:
 
 ## Próxima Etapa Recomendada
 
-A próxima etapa é implementar a `v2-comentarios-e-snapshots`.
+A próxima etapa é implementar a `v2-mindmap-estrutural`.
 
 Prioridades imediatas:
 
-1. consolidar o módulo `comments` com threads ancoradas em `shapeId`;
-2. implementar snapshots nomeados e restauração de versão;
-3. garantir consistência entre comentários, snapshots e `currentDocument`;
-4. proteger essas regras com testes de unidade e integração.
+1. introduzir estrutura pai-filho real para o mindmap dentro do board;
+2. implementar criação de tópico central, filho e irmão com semântica explícita;
+3. recalcular layout e conexões do mapa a partir da árvore;
+4. proteger essas regras com testes de unidade antes de avançar para `v3-mindmap-interacoes-e-refino`.
 
 ## Observações de Governança
 

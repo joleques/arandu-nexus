@@ -30,10 +30,24 @@ Antes de iniciar qualquer implementação, o agente deve ler nesta ordem:
   Base operacional do projeto para permitir implementação real com segurança.
 - `v1-boards-e-canvas`
   Primeira entrega funcional visível: board persistido com canvas editável.
-- `v2-comentarios-e-snapshots`
+- `v2-mindmap-estrutural`
+  Introdução do mindmap como estrutura de árvore real com layout automático básico.
+- `v3-mindmap-interacoes-e-refino`
+  Evolução do mindmap com refinamento de interação, colapso de ramos e fluidez de uso.
+- `v4-comentarios-e-snapshots`
   Evolução do board com comentários ancorados e versionamento simples.
-- `v3-templates-export-e-hardening`
+- `v5-templates-export-e-hardening`
   Fechamento do MVP com aceleração de uso, export e robustez mínima.
+
+## Prioridade Atual do Roadmap
+
+O roadmap operacional foi repriorizado para colocar o mindmap antes das capacidades de comentários, snapshots, templates e export.
+
+Isso significa:
+
+1. a antiga `v2` passa a ser `v4`;
+2. a antiga `v3` passa a ser `v5`;
+3. as novas `v2` e `v3` ficam reservadas ao fluxo de mindmap.
 
 ## Fechamento Obrigatório por Versão
 

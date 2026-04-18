@@ -2,6 +2,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { BOARD_ARCHITECTURE_FLOW_DEFINITIONS, BOARD_ARCHITECTURE_NODE_DEFINITIONS } from '@/modules/boards/application/board-architecture-elements';
+import { BOARD_MINDMAP_ACTION_DEFINITIONS } from '@/modules/boards/application/board-mindmap';
 import { BoardCanvasLayout } from '@/modules/boards/ui/board-canvas-layout';
 import { getSaveLabel } from '@/modules/boards/ui/board-save-state';
 
@@ -14,10 +15,13 @@ describe('BoardCanvasLayout', () => {
         saveState="saved"
         nodeDefinitions={BOARD_ARCHITECTURE_NODE_DEFINITIONS}
         flowDefinitions={BOARD_ARCHITECTURE_FLOW_DEFINITIONS}
+        mindmapActions={BOARD_MINDMAP_ACTION_DEFINITIONS}
+        mindmapHint="Selecione um topico do mindmap para criar filho ou irmao."
         imageDefinitions={[{ kind: 'api', label: 'API', src: '/icons/api.png' }]}
         controlsDisabled={false}
         onInsertNode={vi.fn()}
         onInsertFlow={vi.fn()}
+        onMindmapAction={vi.fn()}
         onInsertImage={vi.fn()}
         labelPopover={{
           visible: false,
@@ -32,6 +36,10 @@ describe('BoardCanvasLayout', () => {
 
     expect(markup).toContain('Voltar para boards');
     expect(markup).toContain('Biblioteca visual');
+    expect(markup).toContain('Mindmap');
+    expect(markup).toContain('Topico central');
+    expect(markup).toContain('Reorganizar layout');
+    expect(markup).toContain('Recolher ou expandir');
     expect(markup).toContain('Imagens');
     expect(markup).toContain('API');
     expect(markup).toContain('Tudo salvo');
