@@ -6,6 +6,12 @@ Este projeto implementa o Arandu Nexus, uma aplicação web de whiteboard voltad
 
 O objetivo do produto é permitir que times desenhem, organizem e retomem raciocínios arquiteturais com fluidez de quadro branco, preservando contexto suficiente para continuidade posterior.
 
+## Origem do Nome
+
+O nome `Arandu` foi adotado por sua origem indigena e por sua proximidade com sentidos recorrentes como `sabedoria`, `conhecimento` e `entendimento`, especialmente em referencias ligadas ao guarani e ao universo tupi-guarani. Ha variacoes de formulacao entre fontes e contextos, o que exige algum cuidado para nao tratar etimologia como slogan com fantasia academica. Ainda assim, o nucleo de significado associado ao termo permanece coerente.
+
+Essa escolha dialoga com a proposta central do produto. O Arandu Nexus existe para ajudar conhecimento tecnico a ganhar forma visual, contexto e continuidade, permitindo que raciocinios arquiteturais nao se percam entre memoria informal, screenshots soltos e interpretacoes tardias. O nome, portanto, nao funciona apenas como identidade; ele tambem resume a intencao do projeto.
+
 ## Fonte de Contexto Atual
 
 Este arquivo é a fonte canônica de contexto do projeto para conversas recorrentes no repositório.
